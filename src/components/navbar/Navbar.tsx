@@ -74,17 +74,15 @@ export default function Navbar() {
                 }   
                 
                 try {
-
                     const validated = MaterialsResponseSchema.parse(data);
 
                     const summedMaterials = validated
                     .flatMap(item => item.material)
                     .reduce<Material[]>((acc, { materialName, quantity, cost }) => {
-                    const existing = acc.find(mat => mat.materialName === materialName);
+                    const existing = acc.find(mat => mat.materialName === materialName && mat.cost === cost);
 
                     if (existing) {
                         existing.quantity += quantity;
-                        existing.cost += cost;
                     } else {
                         acc.push({ materialName, quantity, cost });
                     }
@@ -101,7 +99,7 @@ export default function Navbar() {
         }   
 
         getMaterials();
-    }, [date, user, supabase]);
+    }, [date, user, supabase, materials]);
         
         
     return (
