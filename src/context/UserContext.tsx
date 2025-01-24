@@ -1,15 +1,19 @@
 import supabase from "@/helper/supabaseClient";
 import { createContext, useContext, useEffect, useState } from "react";
+import { z } from "zod";
 
-interface User {
-    id: string; 
-    email: string;
-    user_metadata: {
-        username: string;
-    }
-}
 
-const UserContext = createContext();
+export const UserSchema = z.object({
+    id: z.string(),
+    email: z.string().email(),
+    user_metadata: z.object({
+        username: z.string(),
+    }),
+});
+
+export type User = z.infer<typeof UserSchema>;
+
+const UserContext = createContext<User | null>(null);
 
 export const useUserContext = () => {
     return useContext(UserContext);
@@ -24,9 +28,17 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
                 if (error || !data?.user) {
                     console.error("Error fetching user: ", error);
                     setUser(null);
-                } else {
-                    setUser(data.user as User);
+                    return;
                 }
+
+                try {
+                    const validatedUser = UserSchema.parse(data.user);
+                    setUser(validatedUser);
+                } catch (validationError) {
+                    console.error("Validation error: ", validationError);
+                    setUser(null);
+                }
+                
             } catch (err) {
                 console.error("Unexpected error: ", err);
                 setUser(null);

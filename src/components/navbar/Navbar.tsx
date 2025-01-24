@@ -9,19 +9,34 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
+import { z } from "zod";
+
+type Material = z.infer<typeof MaterialSchema>
+
+const MaterialSchema = z.object({
+    materialName: z.string(),
+    quantity: z.number().positive(),
+    cost: z.number().nonnegative(),
+})
+
+const MaterialsResponseSchema = z.array(
+    z.object({
+        material: z.array(MaterialSchema),
+    })
+)
 
 export default function Navbar() {
     const [ isOpen, setIsOpen ] = useState(false);
-    const [ date, setDate ] = useState();
-    const [ materials, setMaterials ] = useState([]);
-    const [ costTotal, setCostTotal ] = useState();
+    const [ date, setDate ] = useState<Date>();
+    const [ materials, setMaterials ] = useState<Material[]>([]);
+    const [ costTotal, setCostTotal ] = useState<number>(0);
 
     const user = useUserContext();
     const navigate = useNavigate();
 
-    const getTotal = (event) => {
+    const getTotal = (materials: Material[]) => {
         let total = 0;
-        for (const item of event) {
+        for (const item of materials) {
             const cost = Number(item.cost) || 0;
             const quantity = Number(item.quantity) || 1;
             total += cost * quantity;
@@ -38,50 +53,56 @@ export default function Navbar() {
 
     useEffect(() => {
         const getMaterials = async () => {
-            console.log("Getting materials")
-            if (date) {
-                console.log("Date", date)
-                const formattedDate = format(date, "yyyy-MM-dd");
-                console.log("formatted date", formattedDate)
-                const { data, error } = await supabase
+            if (!date) return;
+            const formattedDate = format(date, "yyyy-MM-dd");
+
+            const username = user?.user_metadata?.username;
+            if (!username) {
+                console.error("Username is undefined");
+                return;
+            }
+            
+            const { data, error } = await supabase
                 .from('event')
                 .select('material')
                 .eq('date', formattedDate)
-                .eq('username', user?.user_metadata?.username)
+                .eq('username', username)
 
                 if (error) {
                     console.error(error);
                     setMaterials([]);
-                } else {   
-                    console.log(`Materials for ${formattedDate} is`, data)
+                }   
+                
+                try {
 
-                    const summedMaterials = data
+                    const validated = MaterialsResponseSchema.parse(data);
+
+                    const summedMaterials = validated
                     .flatMap(item => item.material)
-                    .reduce((acc, { materialName, quantity, cost }) => {
-                        const existing = acc.find(mat => mat.materialName === materialName);
+                    .reduce<Material[]>((acc, { materialName, quantity, cost }) => {
+                    const existing = acc.find(mat => mat.materialName === materialName);
 
-                        if (existing) {
-                            existing.quantity += quantity;
-                            existing.cost += cost;
-                        } else {
-                            acc.push({ materialName, quantity, cost });
-                        }
-
-                        return acc;
-                    }, []);
-
-                    console.log("SUMMARY: ", materials);
-                    setMaterials(summedMaterials);
-                }
-
-                if (materials) {
-                    getTotal(materials);
-                }
+                    if (existing) {
+                        existing.quantity += quantity;
+                        existing.cost += cost;
+                    } else {
+                        acc.push({ materialName, quantity, cost });
+                    }
+                    
+                    return acc;
+                }, []);
+                
+                setMaterials(summedMaterials);
+                getTotal(materials);
+            } catch (err) {
+                console.error("Error: ", err);
+                setMaterials([]);
             }
         }   
-        
+
         getMaterials();
-    }, [date, supabase, materials, user])
+    }, [date, user, supabase]);
+        
         
     return (
         <nav className="flex justify-between items-center">

@@ -9,26 +9,30 @@ import { CalendarIcon } from "lucide-react";
 import { format, startOfDay } from "date-fns";
 import { PopoverContent } from "@radix-ui/react-popover";
 import { Calendar } from "../ui/calendar";
+import { z } from "zod";
 
-export interface Material {
-    materialName: string;
-    quantity: number;
-    cost: number;
-  }
-  
-  export interface Event {
-    name: string;
-    address: string;
-    date: string;
-    eventType: string;
-    material: Material[];
-  }
+const MaterialSchema = z.object({
+    materialName: z.string(),
+    quantity: z.number().positive(),
+    cost: z.number().nonnegative(),
+})
+
+const EventSchema = z.object({
+    id: z.number(),
+    name: z.string(),
+    address: z.string(),
+    date: z.string(),
+    eventType: z.string(),
+    material: z.array(MaterialSchema),
+})
+
+type Event = z.infer<typeof EventSchema>
 
 export default function Main() {
     const user = useUserContext();
-    const [ events, setEvents ] = useState(null);
-    const [ eventName, setEventName ] = useState(null);
-    const [ date, setDate ] = useState<Event['date']>();
+    const [ events, setEvents ] = useState<Event[] | null>(null);
+    const [eventName, setEventName] = useState<string | null>(null);
+    const [ date, setDate ] = useState<Date | null >();
     const [ pastEvent, setPastEvent ] = useState(true);
 
     useEffect(() => {
@@ -62,7 +66,13 @@ export default function Main() {
             }
 
             if (data) {
-                setEvents(data);
+                try {
+                    const validatedData = z.array(EventSchema).parse(data);
+                    setEvents(validatedData);
+                } catch (err) {
+                    console.error("Error: ", err);
+                    setEvents(null);
+                }
             }
         }
 
@@ -90,7 +100,7 @@ export default function Main() {
                 <Input 
                     type="text"
                     placeholder="Search..."
-                    value={eventName}
+                    value={eventName || ""}
                     onChange={(e) => setEventName(e.target.value)}
                     className="rounded"
                 />
@@ -104,7 +114,7 @@ export default function Main() {
                     <PopoverContent className="w-auto bg-white shadow-lg p-0" align="end">
                         <Calendar  
                             mode="single"
-                            selected={date}
+                            selected={date || undefined }
                             onSelect={setDate}
                             initialFocus
                         />
@@ -115,13 +125,9 @@ export default function Main() {
                 </Button>
             </div>
             <div className="grid gap-2 grid-cols-auto-fit-repeat">
-                {events && (
-                    <>
-                        {events.map((event, index) => (
-                            <EventCard key={index} event={event} />
-                        ))}
-                    </>
-                )}
+                {events && events.map((event: Event, index: number) => (
+                    <EventCard key={index} event={event} />
+                ))}
             </div>
         </main>
     )

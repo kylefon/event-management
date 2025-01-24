@@ -5,22 +5,26 @@ import { Button } from "../ui/button";
 import supabase from "@/helper/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { z } from "zod";
 
-export interface Material {
-    materialName: string;
-    quantity: number;
-    cost: number;
-  }
-  
-export interface Event {
-    name: string;
-    address: string;
-    date: string;
-    eventType: string;
-    material: Material[];
-}
+const MaterialSchema = z.object({
+    materialName: z.string(),
+    quantity: z.number().positive(),
+    cost: z.number().nonnegative(),
+})
 
-export default function EventCard({ event }: Event) {
+const EventSchema = z.object({
+    id: z.number(),
+    name: z.string(),
+    address: z.string(),
+    date: z.string(),
+    eventType: z.string(),
+    material: z.array(MaterialSchema),
+})
+
+type Event = z.infer<typeof EventSchema>
+
+export default function EventCard({ event }: { event: Event }) {
 
     const { toast } = useToast();
     const getTotal = () => {
@@ -34,18 +38,20 @@ export default function EventCard({ event }: Event) {
         return total;
     }
 
-    const deleteEvent = async (id) => {
+    const deleteEvent = async (id: number) => {
         const { data, error } = await supabase.from("event").delete().eq("id", id);
+
+        if (data) {
+            toast({
+                title: "Successfully deleted event",
+                description: `Deleted ${event.name}`
+            })
+        }
 
         if (error) {
             toast({
                 title: "Error deleting event",
                 description: `Error deleting ${event.name}`
-            })
-        } else {
-            toast({
-                title: "Successfully deleted event",
-                description: `Deleted ${event.name}`
             })
         }
     }
