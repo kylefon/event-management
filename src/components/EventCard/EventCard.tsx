@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { z } from "zod";
 import { DialogDescription } from "@radix-ui/react-dialog";
+import EditCard from "./EditCard";
 
 const MaterialSchema = z.object({
     materialName: z.string(),
@@ -18,7 +19,7 @@ const EventSchema = z.object({
     id: z.number(),
     name: z.string(),
     address: z.string(),
-    date: z.string(),
+    date: z.date(),
     eventType: z.string(),
     material: z.array(MaterialSchema),
 })
@@ -128,7 +129,17 @@ export default function EventCard({ event }: { event: Event }) {
                         </div>
                     </div>
                     <div className="flex space-x-3">
-                        <Button>Edit</Button>
+                        <Dialog>
+                            <DialogTrigger>
+                                <Button>Edit</Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Edit Event</DialogTitle>
+                                </DialogHeader>
+                                <EditCard event={event}/>
+                            </DialogContent>
+                        </Dialog>
                         <Dialog>
                             <DialogTrigger asChild>
                                 <Button variant={"destructive"}>Delete</Button>
