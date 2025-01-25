@@ -4,12 +4,13 @@ import { Button } from "../ui/button";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import Receipt from "../receipt/Receipt";
 import { useUserContext } from "@/context/UserContext";
-import { CalendarIcon, CirclePlus, Package } from "lucide-react";
+import { CalendarIcon, CirclePlus, Menu, Package } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { z } from "zod";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "../ui/sheet";
 
 type Material = z.infer<typeof MaterialSchema>
 
@@ -100,15 +101,14 @@ export default function Navbar() {
 
         getMaterials();
     }, [date, user, supabase, materials]);
-        
-        
+
     return (
         <nav className="flex justify-between items-center">
             <h1 className="text-xl font-bold">{user?.user_metadata?.username || "Guest"}</h1>
-            <div className="space-x-2 flex items-center" >
+            <div className="space-x-2 flex items-center max-md:hidden">
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger asChild>
-                        <Button className="rounded" variant={"ghost"}><Package /> View Daily Materials</Button>
+                        <Button className="rounded" variant={"secondary"}><Package /> View Daily Materials</Button>
                     </DialogTrigger>
                     <DialogContent onInteractOutside={(e) => e.preventDefault()}>
                         <DialogHeader>
@@ -116,9 +116,9 @@ export default function Navbar() {
                         </DialogHeader>
                         <Popover modal={true}>
                             <PopoverTrigger asChild>
-                                <Button variant={"outline"} className="w-full">
+                                <Button variant={"ghost"} className="w-full">
                                     <CalendarIcon />
-                                    {date ? format(date, "MM/dd/yyyy"): <span>Pick a date</span>}
+                                    {date ? format(date, "MM/dd/yyyy") : <span>Pick a date</span>}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto bg-white shadow-lg p-0" align="center">
@@ -168,6 +168,7 @@ export default function Navbar() {
                         )}
                     </DialogContent>
                 </Dialog>
+                
                 <Dialog>
                     <DialogTrigger asChild>
                         <Button className="rounded bg-green-500"><CirclePlus /> Add Event</Button>
@@ -179,8 +180,99 @@ export default function Navbar() {
                         <Receipt />
                     </DialogContent>
                 </Dialog>
+    
                 <Button onClick={signOut} variant={"destructive"} className="rounded">Sign Out</Button>
             </div>
-        </nav> 
+            
+            <div className="hidden max-md:block">
+                <Sheet>
+                    <SheetTrigger asChild>
+                        <Menu />
+                    </SheetTrigger>
+                    <SheetContent>
+                        <SheetHeader>
+                            <SheetTitle className="opacity-0">Hi</SheetTitle>
+                        </SheetHeader>
+                        <div className="flex flex-col gap-6">
+                            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                                <DialogTrigger asChild>
+                                    <Button className="rounded" variant={"secondary"}><Package /> View Daily Materials</Button>
+                                </DialogTrigger>
+                                <DialogContent onInteractOutside={(e) => e.preventDefault()}>
+                                    <DialogHeader>
+                                        <DialogTitle>Daily Materials</DialogTitle>
+                                    </DialogHeader>
+                                    <Popover modal={true}>
+                                        <PopoverTrigger asChild>
+                                            <Button variant={"ghost"} className="w-full">
+                                                <CalendarIcon />
+                                                {date ? format(date, "MM/dd/yyyy") : <span>Pick a date</span>}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto bg-white shadow-lg p-0" align="center">
+                                            <Calendar  
+                                                mode="single"
+                                                selected={date}
+                                                onSelect={setDate}
+                                                initialFocus                              
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                    { date && materials.length > 0 ? (
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <Package />
+                                                <h3 className="font-semibold">Materials</h3>
+                                            </div>
+                                            <div className="rounded border">
+                                                <div className="grid grid-cols-4 gap-4 p-4 font-medium text-sm">
+                                                    <div>Material</div>
+                                                    <div className="text-center">Quantity</div>
+                                                    <div className="text-right">Cost</div>
+                                                    <div className="text-right">Total</div>
+                                                </div>
+                                        
+                                                <div className="divide-y">
+                                                    {materials.map((item, index) => (
+                                                        <div key={index} className="grid grid-cols-4 gap-4 p-4 text-sm">
+                                                            <div>{item.materialName}</div>
+                                                            <div className="text-center">{item.quantity}</div>
+                                                            <div className="text-right">₱{item.cost.toFixed(2)}</div>
+                                                            <div className="text-right">₱{(item.quantity * item.cost).toFixed(2)}</div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                        
+                                                <div className="border-t p-4">
+                                                    <div className="flex justify-between items-center font-medium">
+                                                        <span>Total Cost</span>
+                                                        <span className="text-lg">₱{costTotal.toFixed(2)}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        ) : (
+                                        <span>No Materials</span>
+                                    )}
+                                </DialogContent>
+                            </Dialog>
+    
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button className="rounded bg-green-500"><CirclePlus /> Add Event</Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-h-[90vh] overflow-y-auto rounded-xl">
+                                    <DialogHeader>
+                                        <DialogTitle>Event Details</DialogTitle>
+                                    </DialogHeader>
+                                    <Receipt />
+                                </DialogContent>
+                            </Dialog>
+                            <Button onClick={signOut} variant={"destructive"} className="rounded">Sign Out</Button>
+                        </div>
+                    </SheetContent>
+                </Sheet>
+            </div>
+        </nav>
     );
 }

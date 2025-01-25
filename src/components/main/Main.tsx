@@ -5,7 +5,7 @@ import { useUserContext } from "@/context/UserContext";
 import { Input } from "../ui/input";
 import { Popover, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, TicketCheck, TicketX } from "lucide-react";
 import { format, startOfDay } from "date-fns";
 import { PopoverContent } from "@radix-ui/react-popover";
 import { Calendar } from "../ui/calendar";
@@ -96,7 +96,7 @@ export default function Main() {
 
     return (
         <main className="space-y-6">
-            <div className="flex space-x-4">
+            <div className="flex max-sm:flex-col gap-5">
                 <Input 
                     type="text"
                     placeholder="Search..."
@@ -104,25 +104,37 @@ export default function Main() {
                     onChange={(e) => setEventName(e.target.value)}
                     className="rounded"
                 />
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant={"outline"}>
-                            <CalendarIcon />
-                            {date ? format(date, "MM/dd/yyyy"): <span>Pick a date</span>}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto bg-white shadow-lg p-0" align="end">
-                        <Calendar  
-                            mode="single"
-                            selected={date || undefined }
-                            onSelect={setDate}
-                            initialFocus
-                        />
-                    </PopoverContent>
-                </Popover>
-                <Button onClick={() => setPastEvent(!pastEvent)}>
-                    { pastEvent ? <span>Show Past Events</span> : <span>Hide Past Events</span> }
-                </Button>
+                <div className="flex gap-3 mx-sm:w-full">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant={"secondary"} className="w-full">
+                                <div className="flex gap-2 max-sm:hidden">
+                                    <CalendarIcon/>
+                                    {date ? <span>{format(date, "MM/dd/yyyy")}</span>: <span>Pick a date</span>}
+                                </div>
+                                <div className="hidden max-sm:block">
+                                    {date ? <span>{format(date, "MM/dd/yyyy")}</span>: <span><CalendarIcon/></span>}
+                                </div>
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto bg-white shadow-lg p-0" align="end">
+                            <Calendar  
+                                mode="single"
+                                selected={date || undefined }
+                                onSelect={setDate}
+                                initialFocus
+                            />
+                        </PopoverContent>
+                    </Popover>
+                    <Button className="w-full" onClick={() => setPastEvent(!pastEvent)}>
+                        <div className="max-sm:hidden">
+                            { pastEvent ? <span>Show Past Events</span> : <span>Hide Past Events</span> }
+                        </div>
+                        <div className="hidden max-sm:block">
+                            { pastEvent ? <span><TicketCheck /></span> : <span><TicketX/></span> }
+                        </div>
+                    </Button>
+                </div>
             </div>
             <div className="grid gap-2 grid-cols-auto-fit-repeat">
                 {events && events.map((event: Event, index: number) => (
