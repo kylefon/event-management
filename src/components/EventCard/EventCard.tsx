@@ -6,6 +6,7 @@ import supabase from "@/helper/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { z } from "zod";
+import { DialogDescription } from "@radix-ui/react-dialog";
 
 const MaterialSchema = z.object({
     materialName: z.string(),
@@ -128,7 +129,18 @@ export default function EventCard({ event }: { event: Event }) {
                     </div>
                     <div className="flex space-x-3">
                         <Button>Edit</Button>
-                        <Button onClick={() => deleteEvent(event.id)} variant={"destructive"}>Delete</Button>
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant={"destructive"}>Delete</Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Are you sure?</DialogTitle>
+                                    <DialogDescription>Do you really want to delete this event? This proccess cannot be undone.</DialogDescription>
+                                </DialogHeader>
+                                <Button onClick={() => deleteEvent(event.id)} variant={"destructive"}>Delete Event</Button>
+                            </DialogContent>
+                        </Dialog>
                     </div>
                 </div>
             </DialogContent>
