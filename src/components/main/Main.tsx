@@ -21,7 +21,7 @@ const EventSchema = z.object({
     id: z.number(),
     name: z.string(),
     address: z.string(),
-    date: z.string(),
+    date: z.date(),
     eventType: z.string(),
     material: z.array(MaterialSchema),
 })
