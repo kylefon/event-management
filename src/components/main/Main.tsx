@@ -30,13 +30,15 @@ type Event = z.infer<typeof EventSchema>
 
 export default function Main() {
     const user = useUserContext();
-    const [ events, setEvents ] = useState<Event[] | null>(null);
+    const [ events, setEvents ] = useState<Event[] | null>([]);
     const [eventName, setEventName] = useState<string | null>(null);
     const [ date, setDate ] = useState<Date | null >();
     const [ pastEvent, setPastEvent ] = useState(true);
+    const [ loading, setLoading ] = useState(false);
 
     useEffect(() => {
         const fetchEvents = async () => {
+            setLoading(true);
             let query = supabase
             .from('event')
             .select()
@@ -67,13 +69,18 @@ export default function Main() {
 
             if (data) {
                 try {
-                    const validatedData = z.array(EventSchema).parse(data);
+                    const adjustedData = data.map((event) => ({
+                        ...event,
+                        date: new Date(event.date),
+                    }))
+                    const validatedData = z.array(EventSchema).parse(adjustedData);
                     setEvents(validatedData);
                 } catch (err) {
                     console.error("Error: ", err);
                     setEvents(null);
                 }
             }
+            setLoading(false);
         }
 
         fetchEvents();
@@ -136,11 +143,15 @@ export default function Main() {
                     </Button>
                 </div>
             </div>
-            <div className="grid gap-2 grid-cols-auto-fit-repeat">
-                {events && events.map((event: Event, index: number) => (
-                    <EventCard key={index} event={event} />
-                ))}
-            </div>
+            { loading ? (
+                <div>Loading...</div>
+            ) : (
+                <div className="grid gap-2 grid-cols-auto-fit-repeat">
+                    {events && events.map((event: Event, index: number) => (
+                        <EventCard key={index} event={event} />
+                    ))}
+                </div>
+            )}
         </main>
     )
 }

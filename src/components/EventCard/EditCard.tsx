@@ -3,7 +3,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { CalendarIcon, PlusCircle, Trash2 } from "lucide-react";
 import { Calendar } from "../ui/calendar";
-import { addMinutes, format, parseISO, subMinutes } from "date-fns";
+import { addMinutes, format, subMinutes } from "date-fns";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "../ui/select";
@@ -56,7 +56,6 @@ export default function EditCard({ event }: { event: Event }) {
         resolver: zodResolver(FormSchema),
         defaultValues: {
             ...event,
-            date: parseISO(event.date.toString()), 
         }
     })
 
